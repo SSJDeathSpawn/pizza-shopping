@@ -1,0 +1,69 @@
+{% extends 'base_with_modal.html' %}
+{% block title %}Order Now{% endblock title %}
+{% block orderlink %}#{%endblock orderlink %}
+{% block content %}
+	<div class="mx-auto w-8/12 mt-8 bg-white pt-5 p-5 mb-6"> 
+		<div class="flex border-b-2 text-left">
+			<span class="flex-shrink text-2xl md:text-3xl lg:text-4xl">Menu</span>
+		</div>
+		<div id="loader" class="grid gap-y-5 mt-2" >
+			<template id="item">
+				<div class="flex p-2 space-x-4">
+					<div class="flex-shrink-0">
+						<img class="h-48 object-cover md:h-full w-48" src="/static/Placeholder.png" alt="Pizza">
+					</div>
+					<div class="flex-grow">
+						<span class="block text-lg md:text-2xl text-black font-bold" id="title"></span>
+						<span class="text-md text-gray-500 my-2" id="price"></span>
+						<span class="block text-lg md:text-md text-gray-500 font-semibold mb-2" id="desc"></span>
+						{% if current_user.is_authenticated %}
+							<button role="button" class="text-white px-3 py-2 rounded font-bold bg-indigo-700 hover:bg-indigo-500">Add</button>
+						{% endif %}
+					</div>
+				</div>
+			</template>
+		</div>
+
+		<div class="flex justify-center mb-3 mt-3" id="target">
+			<img class ="animate-spin" src="/static/loading.svg" />
+		</div>
+	</div>
+{% endblock content %}
+{% block javascript %}
+	<script type="text/javascript">
+		var loader = document.querySelector("#loader");
+		var template = document.querySelector("#item");
+		var sentinel = document.querySelector("#target");
+
+		var counter = 0;
+
+		function loadItems() {
+
+			fetch(`/item/?c=${counter}`).then((response) => {
+				response.json().then((data) => {
+					if (!data.length) {
+						sentinel.innerHTML = "You've reached the end of the menu";
+						return ;
+					}
+					for( var i=0; i< data.length; i++) {
+						let clone = template.content.cloneNode(true);
+						clone.querySelector("#title").innerHTML = data[i].name;
+						clone.querySelector("#desc").innerHTML = data[i].description;
+						clone.querySelector("#price").innerHTML = "₹" + data[i].cost;
+						loader.appendChild(clone)
+					}	
+					counter += 1
+				})
+			});
+		}
+
+		var intersectionObserver = new IntersectionObserver(entries => {
+			if (entries[0].intersectionRatio <=0) {
+				return ;
+			}
+			loadItems();
+		});
+
+		intersectionObserver.observe(sentinel);
+	</script>
+{% endblock javascript %}

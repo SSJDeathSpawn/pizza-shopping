@@ -1,0 +1,87 @@
+{% macro render_field(field) %}
+	<div class="mb-5">
+		<label class="block text-gray-700 text-md font-bold mb-1">
+			{{ field.label }}
+		</label>
+		{{ field(class_="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline")|safe }}
+		{% if field.errors %}
+			<ul class=errors>
+				{% for error in field.errors %}
+					<li>{{ error }}</li>
+				{% endfor %}
+			</ul>
+		{% endif %}
+	</div>
+{% endmacro %}
+
+<html>
+	<head>
+		<title>{% block title %} {% endblock title %} || Charle's Pizza</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<link rel="stylesheet" href="/static/tailwind.css" type="text/css">
+		<link rel="stylesheet" href="/static/fonts.css" type="text/css">
+		<style>
+			/*.modal {
+				transition: opacity 0.25s ease;
+			}*/
+			body.modal-active {
+				overflow-x: hidden;
+				overflow-y: visible !important;
+			}
+		</style>
+		{% block head %}
+		{% endblock head %}
+	</head>
+	<body class="bg-gray-200">
+		{% if error %}
+		<div role="alert" class="z-40 inset-x-0 top-0 fixed flex justify-center">
+			<div class="grid grid-rows-2 justify-center mt-2 ml-2 mr-2 mb-2 w-full md:w-1/2">
+				<div class="relative bg-red-500 text-white font-bold rounded-t px-4 py-2">
+					Oops
+					<button class="absolute bg-transparent text-2xl font-semibold leading-none right-0 top-0 mt-4 mr-6 outline-none focus:outline-none" onclick="closeAlert(event)">
+				    	<span>×</span>
+					</button>
+				</div>
+				<div class="border border-t-0 border-red-400 rounded-b bg-red-100 px-4 py-3 text-red-700">
+					<p>{{ error }}</p>
+				</div>
+			</div>
+		</div>
+		{% endif %}	
+		{% if alert %}
+		<div role="alert" class="z-40 inset-x-0 top-0 fixed flex justify-center">
+			<div class="grid grid-rows-2 justify-center mt-2 ml-2 mr-2 mb-2 w-full md:w-1/2">
+				<div class="relative bg-blue-500 text-white font-bold rounded-t px-4 py-2">
+					Alert
+					<button class="absolute bg-transparent text-2xl font-semibold leading-none right-0 top-0 mt-4 mr-6 outline-none focus:outline-none" onclick="closeAlert(event)">
+				    	<span>×</span>
+					</button>
+				</div>
+				<div class="border border-t-0 border-blue-400 rounded-b bg-blue-100 px-4 py-3 text-blue-700">
+					<p>{{ alert }}</p>
+				</div>
+			</div>
+		</div>
+		{% endif %}	
+		{% block navbar %} 
+		{% endblock navbar %}
+		{% block content %}
+		{% endblock content %}
+		{% block modal %}
+		{% endblock modal %}
+	</body>
+	<script>
+		function closeAlert(event){
+			let element = event.target;
+			while(element.nodeName !== "BUTTON"){
+				element = element.parentNode;
+			}
+			element.parentNode.parentNode.parentNode.parentNode.removeChild(element.parentNode.parentNode.parentNode);
+		}
+	</script>
+	{% block modalscript %}
+	{% endblock modalscript %}
+	{% block javascript %}
+	{% endblock javascript %}
+</html>
