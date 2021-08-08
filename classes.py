@@ -13,6 +13,13 @@ def get_db():
 		db = sql.connect("database.db")
 	return db
 
+sql_equiv = {
+	int: 'INT',
+	str: 'TEXT',
+	bool: 'BOOLEAN',
+	float: 'FLOAT'
+}
+
 class Model(object):
 	fields = []
 	def __init_subclass__(cls):
@@ -25,6 +32,18 @@ class Model(object):
 		if hasattr(cls, "__data_customization__"):
 			t,extra  = cls.__data_customization__()
 		cls.dataclass = dataclasses.make_dataclass(cls.__table_name__ + "_Data", fields, bases=t, namespace=extra)
+		cls.create_table()
+
+	@classmethod
+	def create_table(cls):
+		separate = [i+" {}".format(sql_equiv[getattr(cls,i)]) for i in cls.__fields__]
+		separate[0] += " PRIMARY KEY"
+		columns = ", ".join(separate)
+		statement = "CREATE TABLE IF NOT EXISTS {} ( ".format(cls.__table_name__) + columns + ");"
+		db = get_db()
+		cur = db.cursor()
+		cur.execute(statement)
+		db.commit()
 
 	@classmethod
 	def get_all(cls) -> list:
@@ -121,7 +140,7 @@ class Bills(Model):
 	customer_id = int
 
 class BillItems(Model):
-	billitem_id: int
-	item_id: int
-	qty: int
-	bill_id: int
+	billitem_id=int
+	item_id=int
+	qty=int
+	bill_id=int

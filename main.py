@@ -15,7 +15,6 @@ from constants import *
 import hashlib
 import sys
 from classes import Items, Users
-from models import get_user
 
 DATABASE = 'database.db'
 
@@ -43,13 +42,6 @@ def close_connection(exception):
 	if db is not None:
 		db.commit()
 		db.close()
-
-def init_db():
-	with app.app_context():
-		db = get_db()
-		with app.open_resource('schema.sql', mode='r') as f:
-			db.cursor().executescript(f.read())
-		db.commit()
 
 def fill_db():
 	with open('items.txt', mode='r') as f:
@@ -216,6 +208,5 @@ if len(sys.argv) == 1 :
 else:
 	if __name__ == "__main__":
 		if sys.argv[1].lower() == "init":
-			init_db()
 			print("hello")
 			fill_db()
