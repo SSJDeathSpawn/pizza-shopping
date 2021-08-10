@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 from flask import session
 from wtforms.fields.core import DateField, IntegerField
+from wtforms.fields.simple import SubmitField
 from classes import Users
 import hashlib
 import datetime
@@ -86,8 +87,9 @@ class LuhnAlgo(object):
     
     def __call__(self, form, field):
         nums = list(map(int, field.data))[:-1]
-        check_digit= sum([sum(list(map(int, str(nums[i]*2)))) if i&1 else sum(list(map(int, str(nums[i])))) for i in range(len(nums))]) % 10
-        if nums[-1] != check_digit:
+        check_digit= sum([sum(map(int,list(str(i)))) for i in [sum(list(map(int, str(nums[i]*2)))) if i&1 else sum(list(map(int, str(nums[i])))) for i in range(1,len(nums)-1)]]) % 10
+        if int(field.data[-1]) != int(check_digit):
+            print(check_digit)
             raise validators.ValidationError(self.message)
 
 class BeforeDate(object):
@@ -98,16 +100,17 @@ class BeforeDate(object):
 
     def __call__(self, form, field):
         date = field.data
-        given = datetime.date(day=1,month=int(date[:2]),year=2000+int(date[3:]))
+        given = date
         today = datetime.date.today()
         if given <= today:
             raise validators.ValidationError(self.message)
 
 class CreditCardForm(CustomForm):
-    number = StringField('Card Number', validators=[validators.InputRequired(), LuhnAlgo("This card is invalid.")])
+    number = StringField('Card Number', validators=[validators.InputRequired(), validators.Length(min=13, max=19), LuhnAlgo("This card is invalid.")])
     name = StringField('Name on Card', validators=[validators.InputRequired()])
     expiry = DateField('Use By Date', validators=[validators.InputRequired(), BeforeDate("Your card has expired.")], format='%m/%y')
     cvv = IntegerField('CVV', validators=[validators.InputRequired(), validators.NumberRange(min=0,max=999, message="Your CVV is more than 3 digits or negative.")])
+    submit = SubmitField('Submit')
 
 class Upi(object):
     def __init__(self, message=None):
@@ -122,6 +125,10 @@ class Upi(object):
 
 class UPIForm(CustomForm):
     upi = StringField('upi', validators=[validators.InputRequired(), Upi('Please enter a valid UPI')])
+    submit = SubmitField('Submit')
 
 class CheckoutForm(CustomForm):
-    payment_option = SelectField(u'Payment Method', choices=[('card','Credit/Debit Card'), ('cod', 'Cash on Delivery (Not encouraged)'), ('upi', 'UPI')])
+    payment_option = SelectField(u'Payment Method', choices=[('none', 'Select a Payment Method'),('card','Credit/Debit Card'), ('cod', 'Cash on Delivery (Not encouraged)'), ('upi', 'UPI')])
+
+class CODForm(CustomForm):
+    submit = SubmitField('Submit')

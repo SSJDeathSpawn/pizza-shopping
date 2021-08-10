@@ -33,5 +33,49 @@
         <div class="flex border-b-2">
             <span class="text-2xl font-bold">Checkout</span>
         </div>
+        <div class="mt-2 justify-between">
+            <div>
+                <form action="{{ url_for('checkout') }}"method="post"> 
+                    {{ form1.csrf_token }}
+                    {% if form1.csrf_token.errors %}
+                        <div role="alert">
+                            <div class="border border-red-400 rounded bg-red-100 px-4 py-3 text-red-700">
+                                {% for err in form2.csrf_token.errors %}
+                                    <p>{{ err }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="mb-5">
+                        <label class="block text-gray-700 text-md font-bold mb-1">
+                            {{ form1.payment_option.label }}
+                        </label>
+                        {{ form1.payment_option(class_="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", onchange="this.form.submit()")|safe }}
+                        {% if form1.payment_option.errors %}
+                            <ul class=errors>
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            {% if form2 %}
+                <div>
+                    <form action="{{ url_for('billing') }}" method="post">
+                        {{ form2.csrf_token }}
+                        {% for field in form2 %}
+                            {% if field != form2.csrf_token and field != form2.submit %}
+                                {{ render_field(field) }}
+                            {% endif %}
+                        {% endfor %}
+                        <div class="flex flex-grow justify-between max-w-7xl">
+                            {{ form2.submit(class_="bg-indigo-700 hover:bg-indigo-600 text-white font-bold px-2 py-3 focus:outline-none focus:bg-indigo-600", value="Confirm")}}
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+        <div>
     </div>
 {% endblock content%}

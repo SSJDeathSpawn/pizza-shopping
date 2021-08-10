@@ -37,7 +37,8 @@ class Model(object):
 	@classmethod
 	def create_table(cls):
 		separate = [i+" {}".format(sql_equiv[getattr(cls,i)]) for i in cls.__fields__]
-		separate[0] += " PRIMARY KEY"
+		if not getattr(cls, "__primary_key__", None) == "":
+			separate[0] += " PRIMARY KEY"
 		columns = ", ".join(separate)
 		statement = "CREATE TABLE IF NOT EXISTS {} ( ".format(cls.__table_name__) + columns + ");"
 		db = get_db()
@@ -89,6 +90,15 @@ class Model(object):
 		print("UPDATE {} SET {} WHERE {}".format(cls.__table_name__, values, id_column + "=?"))
 		cur.execute("UPDATE {} SET {} WHERE {}".format(cls.__table_name__, values, id_column + "=?"), dataclasses.astuple(data) + (getattr(data, id_column),))
 		db.commit()
+	
+	@classmethod
+	def delete_record(cls, **kwargs):
+		db = get_db()
+		cur = db.cursor()
+		values = " AND ".join([i+"=?" for i in kwargs])
+		print("DELETE FROM {} WHERE {};".format(cls.__table_name__, values))
+		cur.execute("DELETE FROM {} WHERE {}".format(cls.__table_name__, values), tuple(kwargs.values()))
+		db.commit()
 
 class Users(Model):
 	user_id= int
@@ -132,11 +142,11 @@ class Items(Model):
 	is_available=bool
 
 class Bills(Model):
-	bill_id  = int
+	bill_id  = str
 	customer_id = int
 
 class BillItems(Model):
-	billitem_id=int
 	item_id=int
 	qty=int
 	bill_id=int
+	__primary_key__ = ""

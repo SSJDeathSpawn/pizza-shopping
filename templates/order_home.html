@@ -54,8 +54,10 @@
 						clone.querySelector("#desc").innerHTML = data[i].description;
 						clone.querySelector("#price").innerHTML = "₹" + data[i].cost;
 						let id = data[i].item_id;
-						clone.querySelector('#addbtn').addEventListener('click', function() {cart_add(id)})
-						clone.querySelector('#delbtn').addEventListener('click', function() {cart_remove(id)})
+						{% if current_user.is_authenticated %}
+							clone.querySelector('#addbtn').addEventListener('click', function() {cart_add(id)})
+							clone.querySelector('#delbtn').addEventListener('click', function() {cart_remove(id)})
+						{% endif %}
 						loader.appendChild(clone)
 					}	
 					counter += 1

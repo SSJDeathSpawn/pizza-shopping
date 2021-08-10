@@ -15,7 +15,7 @@ import sqlite3
 from constants import *
 import hashlib
 import sys
-from classes import CartItem, Items, Users
+from classes import *
 
 DATABASE = 'database.db'
 
@@ -81,9 +81,12 @@ def get_items():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+	print(request.form)
 	form = LoginForm(request.form)
 	error = ""
 	open_modal = "false"
+	if request.args:
+		alert = request.args.get('message', "Ominous Message")
 	if request.method=='POST' and form.validate():
 			hashed_password = hashlib.sha256(str.encode(form.password.data, 'utf-8')).hexdigest()
 			users = Users.get_filtered(lambda x: x.username==form.username.data and x.password==hashed_password)
@@ -168,6 +171,42 @@ def show_cart():
 	if total %1 !=0:
 		round_off = math.floor(total)
 	return render_template('show_cart.html', cart=cart, total=total, round_off=round_off, request=request)
+
+@app.route('/checkout/', methods=['GET','POST'])
+@login_required
+def checkout():
+	form1 = CheckoutForm(request.form)
+	form2 = None
+	if request.method=='POST' and form1.validate():
+		selection = {
+			'card': CreditCardForm,
+			'upi': UPIForm,
+			'cod': CODForm
+		}
+		if form1.payment_option.data:
+			form2 = selection[form1.payment_option.data]()
+	return render_template('checkout.html', form1=form1, form2=form2)
+
+@app.route('/billing/', methods=["POST"])
+@login_required
+def billing():
+	a = [UPIForm, CODForm, CreditCardForm]
+	for i in a:
+		print(list(request.form.keys()),"==", [j.name for j in i()], list(request.form.keys()) in [j.name for j in i()])
+		if sorted(list(request.form.keys())) == sorted([j.name for j in i()]):
+			form = i(request.form)
+	if form.validate():
+		bill_id = "".join([random.choice(string.ascii_uppercase + string.digits) for _ in range(6)])
+		while Bills.get_first(lambda x: x.bill_id == bill_id):
+			bill_id = "".join([random.choice(string.ascii_uppercase + string.digits) for _ in range(6)])
+		bill = Bills.create_record(bill_id=bill_id, customer_id=current_user.get_id())
+		for i in CartItem.get_filtered(lambda x: x.user_id == current_user.get_id()):
+			bill_item = BillItems.create_record(bill_id=bill_id, item_id=i.item_id, qty=i.qty)
+			BillItems.append_record(bill_item)
+		Bills.append_record(bill)
+	else:
+		return render_template('checkout.html', error="Payment failed.", form1=CheckoutForm(), form2=form)
+	return redirect(url_for('index', message="Success"))
 
 @app.route('/reserve/')
 def reserve():
