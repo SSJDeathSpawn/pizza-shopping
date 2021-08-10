@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Cart Details{% endblock title %}
+{% block navbar %} 
+<nav class="flex items-center bg-gray-800 dark:bg-white">
+    <div class="relative justify-between w-full block flex-grow lg:flex lg:items-center lg:w-auto p-3 space-x-4">
+        <a href="{% block homelink %}{{ url_for('index') }}{% endblock homelink %}" class="max-w-2xl block text-2xl text-gray-100 dark:text-gray-700 font-bold text-center md:text-left" style="font-family: 'Parisienne', cursive;">Charle's Pizza</a>
+        <div class="hidden lg:flex-grow lg:block">
+            <div class="inline-flex space-x-4 inset-y-0 left-0" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{% block orderlink %}{{ url_for('order') }}{% endblock orderlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Order Now!</a>
+                <a href="{% block reservelink %}{{ url_for('reserve') }}{% endblock reservelink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Online Reservation</a>
+                {# <a href="{% block reviewlink %}{{ url_for('reviews') }}{% endblock reviewlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Reviews</a> #}
+            </div>
+        </div>
+        {% if current_user.is_authenticated %}
+            <div>
+                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                    <a href="{{ url_for('logout', next=url_for('index')) }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Logout</a>	
+                </div>
+                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                    <a href="{{ url_for('show_cart') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Show Cart</a>	
+                </div>
+            </div>
+        {% else %}
+            <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <a class="modal-open cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Login</a>	
+            </div>
+        {% endif %}
+    </div>
+</nav>
+{% endblock navbar %}
+{% block content %}
+    <div class="mx-auto w-8/12 mt-8 bg-white pt-5 p-10 mb-6">
+        <div class="px-2 border-b-4">
+            <span class="text-4xl font-bold">Cart Details</span>
+        </div>   
+        <div class="grip gap-y-2 mt-5">
+            {% for item in cart %}
+                <div class="flex p-2 space-x-4">
+                    <div class="relative flex-grow space-x-5 mr-10">
+                        <span class="inline-block text-lg md:text-2xl text-black font-bold">{{ get_item(item.item_id).name }}</span>
+                        <span class="inline-block text-md text-gray-800 my-2">{{ item.qty }}</span>
+						<span class="inline-block text-md text-gray-800 my-2">₹{{ get_item(item.item_id).cost }}</span>
+                        <span class="inline-block absolute right-0 text-md text-gray-800 my-2">₹{{ get_item(item.item_id).cost * item.qty}}</span>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="flex p-2 space-x-4">
+                <div class="relative flex-grow space-x-5 mr-10">
+                    <span class="inline-block text-lg md:text-2xl text-black font-bold">Taxes (already included)</span>
+                    <span class="inline-block absolute right-0 text-md text-gray-800 my-2">₹{{ "%.2f"|format(total - (total*100)/105) }}</span>
+                </div>
+            </div>
+            <div class="flex p-2 space-x-4">
+                <div class="relative flex-grow space-x-5 mr-10">
+                    <span class="inline-block text-lg md:text-2xl text-black font-bold">Total</span>
+                    <span class="inline-block absolute right-0 text-md text-gray-800 my-2">₹{{ total }}</span>
+                </div>
+            </div>
+            {% if round_off %}
+                <div class="flex p-2 space-x-4">
+                    <div class="relative flex-grow space-x-5 mr-10">
+                        <span class="inline-block text-lg md:text-2xl text-black font-bold">Total (Rounded off)</span>
+                        <span class="inline-block absolute right-0 text-md text-gray-800 my-2">₹{{ round_off }}</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="block relative p-2 my-10">
+            <div class="absolute inset-y-0 right-8">
+                <a class="text-bold text-2xl">Proceed To Checkout</a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

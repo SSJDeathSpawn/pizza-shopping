@@ -112,13 +112,9 @@ class Users(Model):
 			"__ne__": lambda self, other: not self.__eq__(other)
 		})
 	
-class ShoppingCart(Model):
-	cart_id=int
-	user_id=int
-
 class CartItem(Model):
 	cartitem_id=int
-	cart_id=int
+	user_id=int
 	item_id=int
 	qty=int
 

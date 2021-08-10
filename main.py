@@ -1,5 +1,6 @@
 import dataclasses
-from flask import Flask, json, render_template, url_for, redirect, g, make_response, jsonify, request
+from flask import Flask, json, render_template, url_for, redirect, g, make_response, jsonify, request, Response
+import math
 from flask_login import LoginManager, login_user, current_user
 import os
 import string
@@ -14,7 +15,7 @@ import sqlite3
 from constants import *
 import hashlib
 import sys
-from classes import Items, Users
+from classes import CartItem, Items, Users
 
 DATABASE = 'database.db'
 
@@ -68,6 +69,16 @@ def load_user(user_id):
 	t = Users.get_filtered(lambda x: x.user_id == user_id)
 	return t[0] if t != [] else None
 
+@app.context_processor
+def put_items():
+	return dict(item=Items.get_all())
+
+@app.context_processor
+def get_items():
+	def get_item(item_id):
+		return Items.get_first(lambda x: x.item_id == item_id)
+	return dict(get_item=get_item)
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
 	form = LoginForm(request.form)
@@ -119,6 +130,44 @@ def item():
 			res = make_response(jsonify({}), 200)
 		
 		return res
+
+@app.route('/cart-item/')
+@login_required
+def get_cart_item():
+	if request.args:
+		item_id = int(request.args.get("id"))
+		y = CartItem.get_first(lambda x: x.user_id == current_user.get_id() and x.item_id == item_id)
+		cart = 0 if not y else y.qty
+		return make_response(jsonify({'qty': cart}), 200)
+
+@app.route('/add-cart/')
+@login_required
+def add_cart():
+	if request.args:
+		item_id = int(request.args.get("id"))
+		qty_change=int(request.args.get("qty"))
+		user_id = int(current_user.get_id())
+		if not CartItem.get_first(lambda x: x.user_id == user_id and x.item_id ==item_id):
+			cartitem_id = random.randint(1,9999999)
+			while CartItem.get_first(lambda x: x.cartitem_id == cartitem_id):
+				cartitem_id = random.randint(1,9999999)
+			cartitem = CartItem.create_record(cartitem_id=cartitem_id, user_id=user_id, item_id=item_id, qty=1)
+			CartItem.append_record(cartitem)
+		else:
+			cartitem = CartItem.get_first(lambda x: x.user_id == user_id and x.item_id == item_id)
+			cartitem.qty = cartitem.qty+ qty_change
+			CartItem.update_record(cartitem)
+		return make_response(jsonify({}), 200)
+
+@app.route('/cart')
+@login_required
+def show_cart():
+	cart = CartItem.get_filtered(lambda x: x.user_id == current_user.get_id())
+	total = sum([Items.get_first(lambda x: x.item_id==item.item_id).cost * item.qty for item in cart])
+	round_off = 0
+	if total %1 !=0:
+		round_off = math.floor(total)
+	return render_template('show_cart.html', cart=cart, total=total, round_off=round_off, request=request)
 
 @app.route('/reserve/')
 def reserve():

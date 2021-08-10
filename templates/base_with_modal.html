@@ -18,6 +18,9 @@
                 <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
                     <a href="{{ url_for('logout', next=request.url) }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Logout</a>	
                 </div>
+                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                    <a href="{{ url_for('show_cart') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Show Cart</a>	
+                </div>
             </div>
         {% else %}
             <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">

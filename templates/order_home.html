@@ -4,7 +4,7 @@
 {% block content %}
 	<div class="mx-auto w-8/12 mt-8 bg-white pt-5 p-5 mb-6"> 
 		<div class="flex border-b-2 text-left">
-			<span class="flex-shrink text-2xl md:text-3xl lg:text-4xl">Menu</span>
+			<span class="flex-shrink text-2xl md:text-3xl lg:text-4xl font-bold">Menu</span>
 		</div>
 		<div id="loader" class="grid gap-y-5 mt-2" >
 			<template id="item">
@@ -17,7 +17,10 @@
 						<span class="text-md text-gray-500 my-2" id="price"></span>
 						<span class="block text-lg md:text-md text-gray-500 font-semibold mb-2" id="desc"></span>
 						{% if current_user.is_authenticated %}
-							<button role="button" class="text-white px-3 py-2 rounded font-bold bg-indigo-700 hover:bg-indigo-500">Add</button>
+							<div class="flex space-x-5 justify-start">
+								<button role="button" class="text-white px-3 py-2 rounded font-bold bg-indigo-700 hover:bg-indigo-500" id="addbtn">Add</button>
+								<button role="button" class="text-white px-3 py-2 rounded font-bold bg-indigo-700 hover:bg-indigo-500" id="delbtn">Remove</button>
+							</div>
 						{% endif %}
 					</div>
 				</div>
@@ -50,11 +53,40 @@
 						clone.querySelector("#title").innerHTML = data[i].name;
 						clone.querySelector("#desc").innerHTML = data[i].description;
 						clone.querySelector("#price").innerHTML = "₹" + data[i].cost;
+						let id = data[i].item_id;
+						clone.querySelector('#addbtn').addEventListener('click', function() {cart_add(id)})
+						clone.querySelector('#delbtn').addEventListener('click', function() {cart_remove(id)})
 						loader.appendChild(clone)
 					}	
 					counter += 1
 				})
 			});
+		}
+
+		function get_item_from_cart(id) {
+			return fetch(`/cart-item/?id=${id}`)
+			.then((response) => {return response.json()})
+		}
+
+		function cart_add(id) {
+			change_cart(id, true);
+		}
+
+		function cart_remove(id) {
+			console.log(id)
+			get_item_from_cart(id).then((data) =>{
+				console.log(data.qty)
+				if (data.qty > 0) {
+					change_cart(id, false);
+				}
+			});
+		}
+
+		function change_cart(id, is_add) {
+			qty_change = (Number(is_add) - 0.5) * 2
+			fetch(`/add-cart/?id=${id}&qty=${qty_change}`).then((response) => {
+				return;
+			})
 		}
 
 		var intersectionObserver = new IntersectionObserver(entries => {

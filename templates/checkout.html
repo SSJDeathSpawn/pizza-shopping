@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock title %}
+{% block navbar %} 
+<nav class="flex items-center bg-gray-800 dark:bg-white">
+    <div class="relative justify-between w-full block flex-grow lg:flex lg:items-center lg:w-auto p-3 space-x-4">
+        <a href="{% block homelink %}{{ url_for('index') }}{% endblock homelink %}" class="max-w-2xl block text-2xl text-gray-100 dark:text-gray-700 font-bold text-center md:text-left" style="font-family: 'Parisienne', cursive;">Charle's Pizza</a>
+        <div class="hidden lg:flex-grow lg:block">
+            <div class="inline-flex space-x-4 inset-y-0 left-0" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{% block orderlink %}{{ url_for('order') }}{% endblock orderlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Order Now!</a>
+                <a href="{% block reservelink %}{{ url_for('reserve') }}{% endblock reservelink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Online Reservation</a>
+                {# <a href="{% block reviewlink %}{{ url_for('reviews') }}{% endblock reviewlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Reviews</a> #}
+            </div>
+        </div>
+        {% if current_user.is_authenticated %}
+            <div>
+                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                    <a href="{{ url_for('logout', next=url_for('index')) }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Logout</a>	
+                </div>
+                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                    <a href="{{ url_for('show_cart') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Show Cart</a>	
+                </div>
+            </div>
+        {% else %}
+            <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <a class="modal-open cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Login</a>	
+            </div>
+        {% endif %}
+    </div>
+</nav>
+{% endblock navbar %}
+{% block content %}
+	<div class="mx-auto w-8/12 mt-8 bg-white pt-5 p-5 mb-6"> 
+        <div class="flex border-b-2">
+            <span class="text-2xl font-bold">Checkout</span>
+        </div>
+    </div>
+{% endblock content%}
