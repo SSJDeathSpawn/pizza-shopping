@@ -1,0 +1,5 @@
+flask
+flask-login
+WTForms
+python-dotenv
+email_validator
