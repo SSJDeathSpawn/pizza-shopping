@@ -32,6 +32,12 @@ login_manager.init_app(app)
 login_manager.session_protection = None
 
 def get_db():
+	"""
+	Get the database connection object related to Flask, and if doesn't exist create one
+
+	Returns:
+		sqlite3.Connection: The connection object which can interact with the database 
+	"""
 	db = getattr(g, '_database', None)
 	if db is None:
 		db = g._database = sqlite3.connect(DATABASE)
@@ -39,12 +45,18 @@ def get_db():
 
 @app.teardown_appcontext
 def close_connection(exception):
+	"""
+	This function is executed when the flask webserver is taken down
+	"""
 	db = getattr(g, '_database', None)
 	if db is not None:
 		db.commit()
 		db.close()
 
 def fill_db():
+	"""
+	Auto fills the database with the items that you have can order
+	"""
 	with open('items.txt', mode='r') as f:
 		data = []
 		for i in f.readlines():
@@ -58,29 +70,59 @@ def fill_db():
 			db.commit()
 
 def is_safe_url(target):
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-           ref_url.netloc == test_url.netloc
+	"""
+	Checks if the given url is safe to redirect to
+
+	Args:
+		target (str): The path which you want to check is safe
+
+	Returns:
+		(bool): Is the given url safe or not
+	"""
+	ref_url = urlparse(request.host_url)
+	test_url = urlparse(urljoin(request.host_url, target))
+	return test_url.scheme in ('http', 'https') and \
+		   ref_url.netloc == test_url.netloc
 
 
 @login_manager.user_loader
 def load_user(user_id):
+	"""
+	When given a user id, it returns the Model-based instance of the user
+	"""
 	t = Users.get_filtered(lambda x: x.user_id == user_id)
 	return t[0] if t != [] else None
 
 @app.context_processor
 def put_items():
+	"""
+	Can be used in templates to get all the items
+
+	Returns:
+		(dict): A dictionary containing all the items in 'item' value of dictionary
+	"""
 	return dict(item=Items.get_all())
 
 @app.context_processor
 def get_items():
+	"""
+	Can be used in templates to get a certain item known the id
+
+	Returns:
+		(dict): A dictionary which contains function to get a certain item, when given the id 
+	"""
 	def get_item(item_id):
 		return Items.get_first(lambda x: x.item_id == item_id)
 	return dict(get_item=get_item)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+	"""
+	Flask endpoint for the index page of the website
+
+	Returns:
+		(str): The HTML output
+	"""
 	print(request.form)
 	form = LoginForm(request.form)
 	error = ""
@@ -99,12 +141,14 @@ def index():
 				open_modal = "true"
 	return render_template('index.html', form=form, error=error, request=request, open_modal=open_modal)
 
-@app.route('/reviews/')
-def reviews():
-	return render_template('reviews_home.html')
-
 @app.route('/order/', methods=['GET', 'POST'])
 def order():
+	"""
+	Flask enpoint for the menu page
+
+	Returns:
+		(str): The HTML output
+	"""
 	form = LoginForm(request.form)
 	error = ""
 	open_modal="false"
@@ -122,6 +166,13 @@ def order():
 
 @app.route('/item/')
 def item():
+	"""
+	Endpoint which returns a set of items when a GET request is sent to it in JSON format
+	It is paginated which means that it gives a set of items if c=1 and the next set if c=2
+
+	Returns:
+		(flask.wrappers.Response): The response to the GET request with the JSON data in it
+	"""
 	time.sleep(0.5)
 	print("Reached here!")
 	if request.args:
@@ -134,18 +185,16 @@ def item():
 		
 		return res
 
-@app.route('/cart-item/')
-@login_required
-def get_cart_item():
-	if request.args:
-		item_id = int(request.args.get("id"))
-		y = CartItem.get_first(lambda x: x.user_id == current_user.get_id() and x.item_id == item_id)
-		cart = 0 if not y else y.qty
-		return make_response(jsonify({'qty': cart}), 200)
-
 @app.route('/add-cart/')
 @login_required
 def add_cart():
+	"""
+	Endpoint which adds to the quantity or adds a new item the cart when a GET request is sent to it.
+	'id' specifies which item to add and 'qty' specifies how much of the item should be added to the cart
+
+	Returns:
+		[flask.wrappers.Response]: An empty OK response if everything goes well
+	"""
 	if request.args:
 		item_id = int(request.args.get("id"))
 		qty_change=int(request.args.get("qty"))
@@ -160,11 +209,18 @@ def add_cart():
 			cartitem = CartItem.get_first(lambda x: x.user_id == user_id and x.item_id == item_id)
 			cartitem.qty = cartitem.qty+ qty_change
 			CartItem.update_record(cartitem)
+		CartItem.delete_record(qty=0)
 		return make_response(jsonify({}), 200)
 
 @app.route('/cart')
 @login_required
 def show_cart():
+	"""
+	Flask endpoint of the checkout page 
+
+	Returns:
+		(str): The HTML output
+	"""
 	cart = CartItem.get_filtered(lambda x: x.user_id == current_user.get_id())
 	total = sum([Items.get_first(lambda x: x.item_id==item.item_id).cost * item.qty for item in cart])
 	round_off = 0
@@ -175,6 +231,12 @@ def show_cart():
 @app.route('/checkout/', methods=['GET','POST'])
 @login_required
 def checkout():
+	"""
+	Flask enpoint of the payment details page
+
+	Returns:
+		(str): The HTML output
+	"""
 	form1 = CheckoutForm(request.form)
 	form2 = None
 	if request.method=='POST' and form1.validate():

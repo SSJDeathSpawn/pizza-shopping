@@ -1,4 +1,3 @@
-import sqlite3
 from flask_login import UserMixin
 from flask import g
 import sqlite3 as sql
@@ -6,6 +5,9 @@ import dataclasses
 import itertools
 
 def get_db():
+	"""
+	Used to get the database connection object, returns a local version or the one tied to flask depending on whether it is being run.
+	"""
 	if g:
 		import main
 		db = main.get_db()
@@ -20,9 +22,23 @@ sql_equiv = {
 	float: 'FLOAT'
 }
 
+
 class Model(object):
+	"""
+	A ORM based class that is used to get or crate a Python-esque version of a table in Mysql.
+	Created from scratch using dataclasses. Contains a bunch of useful functions and features that makes accessing MySql tables so much easier in Python
+
+	For each class that extends it, if the name of the class is {name},
+	then there is a dataclass created called {name}_Data which contains the class variables as it's fields and the class variable's values as its type.
+
+	If you want to add extra fields to the {name}_Data instance or to make it instance another class, override Model#__data_customization__
+	"""
 	fields = []
 	def __init_subclass__(cls):
+		"""
+		When a class extends Model, a new class with its name suffixed by _Data will be created representing the raw table data in the form of an class.
+		That is the role of this function.
+		"""
 		cls.__table_name__ = str(cls.__qualname__)
 		fields = list(filter(lambda x: not(x.startswith("__") and x.endswith("__")) and not x in list(Model.__dict__.keys()), list(cls.__dict__.keys())))
 		cls.__fields__ = fields
@@ -33,9 +49,12 @@ class Model(object):
 			t,extra  = cls.__data_customization__()
 		cls.dataclass = dataclasses.make_dataclass(cls.__table_name__ + "_Data", fields, bases=t, namespace=extra)
 		cls.create_table()
-
+	
 	@classmethod
 	def create_table(cls):
+		"""
+		The function which will create the table in the SQL file (if it doesn't exist) 
+		"""
 		separate = [i+" {}".format(sql_equiv[getattr(cls,i)]) for i in cls.__fields__]
 		if not getattr(cls, "__primary_key__", None) == "":
 			separate[0] += " PRIMARY KEY"
@@ -48,6 +67,12 @@ class Model(object):
 
 	@classmethod
 	def get_all(cls) -> list:
+		"""
+		Returns all the rows in the table in the form a {name}_Data list
+
+		Returns:
+		list: All the rows in the table in the form of {name}_Data instances
+		"""
 		db = get_db()
 		cur = db.cursor()
 		cur.execute("SELECT * FROM {}".format(cls.__table_name__))
@@ -56,24 +81,56 @@ class Model(object):
 			data.append(cls.dataclass(*i))
 		return data
 
+
 	@classmethod
 	def get_filtered(cls, predicate) -> list:
+		"""
+		Returns the rows which holds the needed data, handled by the predicate. 
+		The predicate should be a [{name}_Data -> bool] function which handles a row in the form of a {name}_Data instance and returns whether the instance is needed or not by returning true or false. 
+		
+		Args:
+		predicate (function): A function which returns true or false based on whether the row is needed in the output or not.
+
+		Returns:
+		list: The filtered rows in the table in the form of {name}_Data instances.
+		"""
 		org = cls.get_all()
 		filtered = list(filter(predicate, org))
 		return filtered
 	
 	@classmethod
 	def get_first(cls, predicate):
+		"""
+		Returns the first row ( when ordered chronologically by creation date ) of all the rows which return true after bring passed into the predicate. 
+		The predicate should be a [{name}_Data -> bool] function which handles a row in the form of a {name}_Data instance and returns whether the instance is needed or not by returning true or false.
+
+		Args:
+		predicate (function): A function which returns true or false based on whether the row is needed in the output or not.
+
+		Returns:
+		{name}_Data: A {name}_Data instance of the first row of the table which satisfies the predicate provided. 
+		"""
 		org = cls.get_all()
 		filtered = list(filter(predicate, org))
 		return filtered[0] if filtered else filtered 
 	
 	@classmethod
 	def create_record(cls, *args, **kwargs):
+		"""
+		Create a {name}_Data instance of a record which is not in a table with the intent of adding it to the actual MySQL database with Model#append_record
+
+		Args
+		"""
 		return cls.dataclass(*args, **kwargs)
 
 	@classmethod
 	def append_record(cls, data):
+		"""
+		Appends a {name}_Data instance to the actual SQL database
+
+		Args:
+			data ({name}_Data): The model table dataclass instance that is to be added to the SQL database 
+		"""
 		db = get_db()
 		cur = db.cursor()
 		print("INSERT INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");")
@@ -82,10 +139,18 @@ class Model(object):
 		db.commit()
 	
 	@classmethod
-	def update_record(cls, data):
+	def update_record(cls, data, id_column=None):
+		"""
+		When given a {name}_Data instance, it will set the analogous record in the database to match the instance's values.
+		The instance given has to have at least one unique key column which matches it analogous record's value (which is presumed to be the first given field in the Model class if not given).
+
+		Args:
+			data ({name}_Data): The {name}_Data instance with the new values 
+			id_column (str, optional): The unique key column with the matching data. Defaults to first field given in the parent Model extending class.
+		"""
 		db = get_db()
 		cur = db.cursor()
-		id_column = cls.__fields__[0]
+		id_column = id_column if id_column else cls.__fields__[0]
 		values = ", ".join([i+"=?" for i in cls.__fields__]) 
 		print("UPDATE {} SET {} WHERE {}".format(cls.__table_name__, values, id_column + "=?"))
 		cur.execute("UPDATE {} SET {} WHERE {}".format(cls.__table_name__, values, id_column + "=?"), dataclasses.astuple(data) + (getattr(data, id_column),))
@@ -93,6 +158,9 @@ class Model(object):
 	
 	@classmethod
 	def delete_record(cls, **kwargs):
+		"""
+		When given a field and it's value as a keyword arguemnt, it will delete the corresponding record holding those values in the same fields.
+		"""
 		db = get_db()
 		cur = db.cursor()
 		values = " AND ".join([i+"=?" for i in kwargs])
@@ -113,6 +181,9 @@ class Users(Model):
 
 	@classmethod
 	def __data_customization__(cls):
+		"""
+		Used by Model to add custom fields to the {name}_Data instance.
+		"""
 		return ((UserMixin, ),{
 			'is_active': lambda self: bool(self.is_active),
 			'is_authenticated': lambda self: bool(self.is_authenticated),
