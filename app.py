@@ -41,6 +41,17 @@ def get_db():
 	db = getattr(g, '_database', None)
 	if db is None:
 		db = g._database = sqlite3.connect(DATABASE)
+		with open('items.txt', mode='r') as f:
+			data = []
+			for i in f.readlines():
+				j = i[:-1].split("; ")
+				print(j)
+				data += [Items.create_record(item_id=j[0], name=j[1], description=j[2], cost=j[3], is_available=j[4])]
+			with app.app_context():
+				db = get_db()
+				for i in data:
+					Items.append_record(i)
+				db.commit()
 	return db
 
 @app.teardown_appcontext
@@ -57,17 +68,6 @@ def fill_db():
 	"""
 	Auto fills the database with the items that you have can order
 	"""
-	with open('items.txt', mode='r') as f:
-		data = []
-		for i in f.readlines():
-			j = i[:-1].split("; ")
-			print(j)
-			data += [Items.create_record(item_id=j[0], name=j[1], description=j[2], cost=j[3], is_available=j[4])]
-		with app.app_context():
-			db = get_db()
-			for i in data:
-				Items.append_record(i)
-			db.commit()
 
 def is_safe_url(target):
 	"""
@@ -393,12 +393,3 @@ def edit_profile():
 @login_required
 def orders():
 	return render_template('past_orders.html')
-
-if len(sys.argv) == 1 :
-	if __name__=="__main__":
-		app.run(host="0.0.0.0", port=8080, threaded=True,debug=True)
-else:
-	if __name__ == "__main__":
-		if sys.argv[1].lower() == "init":
-			print("hello")
-			fill_db()

@@ -9,8 +9,8 @@ def get_db():
 	Used to get the database connection object, returns a local version or the one tied to flask depending on whether it is being run.
 	"""
 	if g:
-		import main
-		db = main.get_db()
+		import app
+		db = app.get_db()
 	else:
 		db = sql.connect("database.db")
 	return db
@@ -142,9 +142,9 @@ class Model(object):
 		"""
 		db = get_db()
 		cur = db.cursor()
-		print("INSERT INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");")
+		print("INSERT OR IGNORE INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");")
 		print(dataclasses.astuple(data))
-		cur.execute("INSERT INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");", dataclasses.astuple(data))
+		cur.execute("INSERT OR IGNORE INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");", dataclasses.astuple(data))
 		db.commit()
 	
 	@classmethod
