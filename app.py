@@ -47,7 +47,6 @@ def get_db():
 				print(j)
 				data += [Items.create_record(item_id=j[0], name=j[1], description=j[2], cost=j[3], is_available=j[4])]
 			with app.app_context():
-				db = get_db()
 				for i in data:
 					Items.append_record(i)
 				db.commit()
