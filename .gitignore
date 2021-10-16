@@ -3,4 +3,3 @@ depends/
 **/__pycache__/
 *.env
 *.db
-items.txt

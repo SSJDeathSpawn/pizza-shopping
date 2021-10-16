@@ -1,0 +1,13 @@
+0; Reg Margherita; The classic margherita, topped only with the nostalgia of those craving this historically rich Pizza; 99.0; 1
+1; Med Margherita; The classic margherita, topped only with the nostalgia of those craving this historically rich Pizza; 200.0; 1
+2; Lar Margherita; The classic margherita, topped only with the nostalgia of those craving this historically rich Pizza; 400.0; 1
+3; Med Farm Fresh; A nice wholesome pizza which your favourite toppings like tomatos, onions, and olives. For those looking for the classic Pizza experience; 233.0; 1
+4; Reg Red Hot; We recommend this Pizza to those looking to dare others. This Pizza is topped with only the spiciest of ingredients from Chillies to Jalapenos; 102.0; 1   
+5; Med Unlikely Combo; A set of usually unrelated ingredients that come together to make a surprisingly good Pizza; 221.0; 1
+6; Med Red Hot; Although not as red or hot as its regular sized cousin, still a challenge to consume without leaving aftereffects; 225.0; 1
+7; Med Asiatic Special; A combination of west and the east, A westernly baked Pizza only with the toppings of a surprisingly good-fit variety of Asian toppings; 214.0; 1
+8; Reg Simple Toppings; Classic pizza, with some unusual toppings despite its name might imply. Mushrooms, chillis, the whole shebang; 113.0; 1
+9; Finger Garlic Bread; Garlic bread, a fine Hors d'oeuvre to be had before Pizza; 122.0; 1
+10; Circle Garlic Bread; A fine appetizer before having the main feast. A classic choice to any Pizza meal; 122.0; 1
+11; Tangy Orange; An orange, citrus-y drink but without the fizzy feeling of the PepsiCo's Miranda or  Coca-Cola's Fanta; 35.0; 1
+12; Coca-Cola; Doesn't need a description. It's a cola drink that is world famous; 40.0; 1
