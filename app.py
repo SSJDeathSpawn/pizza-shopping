@@ -19,7 +19,6 @@ from classes import *
 
 DATABASE = 'database.db'
 
-load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 CSRF_KEY = os.getenv('CSRF_KEY')
 
@@ -393,3 +392,6 @@ def edit_profile():
 @login_required
 def orders():
 	return render_template('past_orders.html')
+
+if __name__ == "__main__":
+    app.run()
