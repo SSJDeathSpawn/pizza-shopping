@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Make Reservations{% endblock title %}
+{% block navbar %} 
+<nav class="flex items-center bg-gray-800 dark:bg-white">
+    <div class="relative justify-between w-full block flex-grow lg:flex lg:items-center lg:w-auto p-3 space-x-4">
+        <a href="{% block homelink %}{{ url_for('index') }}{% endblock homelink %}" class="max-w-2xl block text-2xl text-gray-100 dark:text-gray-700 font-bold text-center md:text-left" style="font-family: 'Parisienne', cursive;">Charle's Pizza</a>
+        <div class="hidden lg:flex-grow lg:block">
+            <div class="inline-flex space-x-4 inset-y-0 left-0" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{% block orderlink %}{{ url_for('order') }}{% endblock orderlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Order Now!</a>
+                <a href="{% block reservelink %}{{ url_for('reserve') }}{% endblock reservelink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Online Reservation</a>
+                {# <a href="{% block reviewlink %}{{ url_for('reviews') }}{% endblock reviewlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Reviews</a> #}
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock navbar %}
+{% block content %}
+	<div class="mx-auto w-8/12 mt-8 bg-white pt-5 p-5 mb-6"> 
+		<div class="flex border-b-2 text-left">
+			<span class="flex-shrink text-2xl md:text-3xl lg:text-4xl font-bold">Book a Reservation</span>
+		</div>
+        <div class="flex text-xl p-5">
+            Due to COVID-19, we are temporarily closing all restaurants. We apologise for any inconvenience caused.
+        </div>
+    </div>
+{% endblock content%}

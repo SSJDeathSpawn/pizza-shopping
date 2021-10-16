@@ -36,7 +36,7 @@ def get_db():
 	Get the database connection object related to Flask, and if doesn't exist create one
 
 	Returns:
-		sqlite3.Connection: The connection object which can interact with the database 
+		[sqlite3.Connection]: The connection object which can interact with the database 
 	"""
 	db = getattr(g, '_database', None)
 	if db is None:
@@ -77,7 +77,7 @@ def is_safe_url(target):
 		target (str): The path which you want to check is safe
 
 	Returns:
-		(bool): Is the given url safe or not
+		[bool]: Is the given url safe or not
 	"""
 	ref_url = urlparse(request.host_url)
 	test_url = urlparse(urljoin(request.host_url, target))
@@ -89,19 +89,15 @@ def is_safe_url(target):
 def load_user(user_id):
 	"""
 	When given a user id, it returns the Model-based instance of the user
+
+	Args:
+		user_id (int): The user id for which you need the details of
+
+	Returns:
+		[User_Data]: User information of the user with the given ID
 	"""
 	t = Users.get_filtered(lambda x: x.user_id == user_id)
 	return t[0] if t != [] else None
-
-@app.context_processor
-def put_items():
-	"""
-	Can be used in templates to get all the items
-
-	Returns:
-		(dict): A dictionary containing all the items in 'item' value of dictionary
-	"""
-	return dict(item=Items.get_all())
 
 @app.context_processor
 def get_items():
@@ -109,7 +105,7 @@ def get_items():
 	Can be used in templates to get a certain item known the id
 
 	Returns:
-		(dict): A dictionary which contains function to get a certain item, when given the id 
+		[dict]: A dictionary which contains function to get a certain item, when given the id 
 	"""
 	def get_item(item_id):
 		return Items.get_first(lambda x: x.item_id == item_id)
@@ -121,9 +117,8 @@ def index():
 	Flask endpoint for the index page of the website
 
 	Returns:
-		(str): The HTML output
+		[str]: The HTML output
 	"""
-	print(request.form)
 	form = LoginForm(request.form)
 	error = ""
 	open_modal = "false"
@@ -147,7 +142,7 @@ def order():
 	Flask enpoint for the menu page
 
 	Returns:
-		(str): The HTML output
+		[str]: The HTML output
 	"""
 	form = LoginForm(request.form)
 	error = ""
@@ -168,13 +163,12 @@ def order():
 def item():
 	"""
 	Endpoint which returns a set of items when a GET request is sent to it in JSON format
-	It is paginated which means that it gives a set of items if c=1 and the next set if c=2
+	It is paginated which means that it gives a set of items if c=1 and the next set if c=2 and so on
 
 	Returns:
-		(flask.wrappers.Response): The response to the GET request with the JSON data in it
+		[flask.wrappers.Response]: The response to the GET request with the JSON data in it
 	"""
-	time.sleep(0.5)
-	print("Reached here!")
+	time.sleep(0.2)
 	if request.args:
 		counter = int(request.args.get("c"))
 		print([dataclasses.asdict(i) for i in Items.get_filtered(lambda x: x.item_id in range(counter*ITEM_LOAD_QUANTITY, (counter+1)*ITEM_LOAD_QUANTITY))])
@@ -184,6 +178,41 @@ def item():
 			res = make_response(jsonify({}), 200)
 		
 		return res
+
+@app.route('/bill/')
+def bill():
+	"""
+	Endpoint which sends all the bill items of a set of bills when a GET request is sent to it in JSON format.
+	It is paginated which means that it gives a set of bill items if c=1 and the next set of bill items if c=2 and so on   
+
+	Returns:
+		[flask.wrappers.Response]: The response to the GET request with the requested JSON data in it
+	"""
+	time.sleep(0.2)
+	try:
+		if request.args:
+			count = int(request.args.get("c"))
+			user=Users.get_first(lambda x: x.user_id == int(request.args.get("uid")))
+			if (user and count*ITEM_LOAD_QUANTITY < len(Bills.get_filtered(lambda x: x.customer_id == user.user_id ))):
+				bills = Bills.get_filtered(lambda x: x.customer_id == user.user_id, order="time_generated", reverse=True)
+				print(bills)
+				bills = bills[count*ITEM_LOAD_QUANTITY: ((count+1)*ITEM_LOAD_QUANTITY if len(bills) >= (count+1)*ITEM_LOAD_QUANTITY else len(bills))]
+				all_bill_items = []
+				for bill in bills:
+					bill_item = []
+					for i in BillItems.get_filtered(lambda x: x.bill_id == bill.bill_id):
+						temp = dataclasses.asdict(i)
+						temp.update({"name": Items.get_first(lambda x: x.item_id == i.item_id).name, "rate":  Items.get_first(lambda x: x.item_id == i.item_id).cost, "time": datetime.datetime.fromtimestamp(int(bill.time_generated)).strftime('%Y-%m-%d %H:%M:%S')})
+						bill_item += [temp]
+					all_bill_items += [bill_item]
+				print(all_bill_items)
+				res = make_response(jsonify(all_bill_items), 200)
+			else:
+				res = make_response(jsonify({}), 200)
+	except ValueError as e:
+		print("Not an integer")
+		res = make_response(jsonify({}), 200)
+	return res
 
 @app.route('/add-cart/')
 @login_required
@@ -207,7 +236,8 @@ def add_cart():
 			CartItem.append_record(cartitem)
 		else:
 			cartitem = CartItem.get_first(lambda x: x.user_id == user_id and x.item_id == item_id)
-			cartitem.qty = cartitem.qty+ qty_change
+			if cartitem.qty >= -qty_change:
+				cartitem.qty = cartitem.qty+ qty_change
 			CartItem.update_record(cartitem)
 		CartItem.delete_record(qty=0)
 		return make_response(jsonify({}), 200)
@@ -252,6 +282,12 @@ def checkout():
 @app.route('/billing/', methods=["POST"])
 @login_required
 def billing():
+	"""
+	Endpoint for generating bill and sending order to the server/database
+
+	Returns:
+		(str): HTML output of the page 
+	"""	
 	a = [UPIForm, CODForm, CreditCardForm]
 	for i in a:
 		print(list(request.form.keys()),"==", [j.name for j in i()], list(request.form.keys()) in [j.name for j in i()])
@@ -261,11 +297,12 @@ def billing():
 		bill_id = "".join([random.choice(string.ascii_uppercase + string.digits) for _ in range(6)])
 		while Bills.get_first(lambda x: x.bill_id == bill_id):
 			bill_id = "".join([random.choice(string.ascii_uppercase + string.digits) for _ in range(6)])
-		bill = Bills.create_record(bill_id=bill_id, customer_id=current_user.get_id())
+		bill = Bills.create_record(bill_id=bill_id, customer_id=current_user.get_id(), time_generated=time.mktime(datetime.datetime.now().timetuple()))
 		for i in CartItem.get_filtered(lambda x: x.user_id == current_user.get_id()):
 			bill_item = BillItems.create_record(bill_id=bill_id, item_id=i.item_id, qty=i.qty)
 			BillItems.append_record(bill_item)
 		Bills.append_record(bill)
+		CartItem.delete_record(user_id=current_user.get_id())
 	else:
 		return render_template('checkout.html', error="Payment failed.", form1=CheckoutForm(), form2=form)
 	return redirect(url_for('index', message="Success"))
@@ -285,8 +322,8 @@ def signup():
 			error = "There is already an user with that username"
 		elif Users.get_first(lambda x: x.email == email):
 			error = "There is an account registered in that email already."
-		elif form.password.data == "1234":
-			error = "Do you want your account to be hacked that easily?"
+		elif form.password.data == "12345678":
+			error = "Do you want your account to be hacked that easily? Please enter another password."
 		else:
 			hash_pass = hashlib.sha256(str.encode(form.password.data, 'utf-8')).hexdigest()
 			address = form.address.data
@@ -351,6 +388,11 @@ def edit_profile():
 	else:
 		form.username.data, form.email.data, form.address.data, form.name.data = user.username, user.email, user.address, user.full_name 
 	return render_template('edit_profile.html', form=form, error=error, alert=alert) 
+
+@app.route('/orders', methods=['GET'])
+@login_required
+def orders():
+	return render_template('past_orders.html')
 
 if len(sys.argv) == 1 :
 	if __name__=="__main__":

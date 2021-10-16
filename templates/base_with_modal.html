@@ -12,13 +12,13 @@
         </div>
         {% if current_user.is_authenticated %}
             <div>
-                <div class="inline-flex" style="font-family: Exo 2, sans-serif;">
-                    <a href="{{ url_for('edit_profile') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Edit Profile</a>
+                <div class="inline-flex mr-2" style="font-family: Exo 2, sans-serif;">
+                    <a href="{{ url_for('edit_profile') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">My Profile</a>
                 </div>
-                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <div class="inline-flex mr-2" style="font-family: 'Exo 2', sans-serif;">
                     <a href="{{ url_for('logout', next=request.url) }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Logout</a>	
                 </div>
-                <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <div class="inline-flex mr-2" style="font-family: 'Exo 2', sans-serif;">
                     <a href="{{ url_for('show_cart') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Show Cart</a>	
                 </div>
             </div>

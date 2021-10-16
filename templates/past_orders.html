@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Past Orders{% endblock title %}
+{% block navbar %} 
+<nav class="flex items-center bg-gray-800 dark:bg-white">
+    <div class="relative justify-between w-full block flex-grow lg:flex lg:items-center lg:w-auto p-3 space-x-4">
+        <a href="{% block homelink %}{{ url_for('index') }}{% endblock homelink %}" class="max-w-2xl block text-2xl text-gray-100 dark:text-gray-700 font-bold text-center md:text-left" style="font-family: 'Parisienne', cursive;">Charle's Pizza</a>
+        <div class="hidden lg:flex-grow lg:block">
+            <div class="inline-flex space-x-4 inset-y-0 left-0" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{% block orderlink %}{{ url_for('order') }}{% endblock orderlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Order Now!</a>
+                <a href="{% block reservelink %}{{ url_for('reserve') }}{% endblock reservelink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Online Reservation</a>
+                {# <a href="{% block reviewlink %}{{ url_for('reviews') }}{% endblock reviewlink %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Reviews</a> #}
+            </div>
+        </div>
+            <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{{ url_for('logout', next=url_for('index')) }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Logout</a>	
+            </div>
+            <div class="inline-flex mr-4" style="font-family: 'Exo 2', sans-serif;">
+                <a href="{{ url_for('show_cart') }}" class="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-1.5 rounded-md text-xl font-medium">Show Cart</a>	
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock navbar %}
+{% block content %}
+    <div class="mx-auto w-9/12 pt-7 pb-7 bg-white p-10 my-10 ">
+        <div class="grid space-y-4">
+            <div class="my-2">
+                <span class="text-3xl font-medium">Order Details:</span>
+            </div>
+            <!-- TODO: Change it so that it actually shows the details instead of order details-->
+            <div id="loader" class="grid gap-y-5 mt-2" >
+                <template id="bill">
+                    <div class="flex justify-between">
+                        <div>
+                            <span class="font-medium text-xl">Bill Id: <span id="billno"></span></span>
+                        </div>
+                        <div>
+                            <span class="text-xl" id="time"></span>
+                        </div>
+                    </div>
+                    <div class="block py-2 space-y-2" id="billrow">
+                    </div>
+                    <div class=" flex justify-between">
+                        <div>
+                        </div>
+                        <div>
+                        </div>
+                </template>
+                <template id="billitem">
+                    <div class="flex justify-between mr-4">
+                        <div>
+                            <span class="text-lg" id="name"></span>
+                        </div>
+                        <div>
+                            <span class="text-lg" id="rate"></span> x <span class="text-lg" id="qty"></span> = <span class="text-lg" id="price"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+		<div class="flex justify-center mb-3 mt-3" id="target">
+			<img class ="animate-spin" src="/static/loading.svg" />
+		</div>
+    </div>
+{% endblock content%}
+{% block javascript %}
+	<script type="text/javascript">
+		var loader = document.querySelector("#loader");
+		var template = document.querySelector("#bill");
+        var tinytemplate = document.querySelector('#billitem')
+		var sentinel = document.querySelector("#target");
+
+		var counter = 0;
+
+		function loadItems() {
+
+			fetch(`/bill/?c=${counter}&uid=${ {{ current_user.user_id }} }`).then((response) => {
+				response.json().then((data) => {
+					if (!data.length) {
+						sentinel.innerHTML = "You have no more history.";
+						return ;
+					}
+					for( var i=0; i< data.length; i++) {
+                        let clone = template.content.cloneNode(true);
+                        let attachChildren = clone.querySelector("#billrow")
+                        for(j=0; j<data[i].length;j++) {
+                            let bill_item = tinytemplate.content.cloneNode(true)
+                            bill_item.querySelector("#name").innerHTML =  data[i][j].name
+                            bill_item.querySelector("#rate").innerHTML =  data[i][j].rate
+                            bill_item.querySelector("#qty").innerHTML = data[i][j].qty
+                            bill_item.querySelector("#price").innerHTML = parseInt(data[i][j].rate) * parseFloat(data[i][j].qty)
+                            attachChildren.appendChild(bill_item)
+                        } 
+						clone.querySelector("#billno").innerHTML = data[i][0].bill_id;
+                        clone.querySelector("#time").innerHTML = data[i][0].time
+						loader.appendChild(clone)
+					}	
+					counter += 1
+				})
+			});
+		}
+
+		var intersectionObserver = new IntersectionObserver(entries => {
+			if (entries[0].intersectionRatio <=0) {
+				return ;
+			}
+			loadItems();
+		});
+
+		intersectionObserver.observe(sentinel);
+	</script>
+{% endblock javascript %}

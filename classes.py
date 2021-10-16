@@ -29,7 +29,8 @@ class Model(object):
 	Created from scratch using dataclasses. Contains a bunch of useful functions and features that makes accessing MySql tables so much easier in Python
 
 	For each class that extends it, if the name of the class is {name},
-	then there is a dataclass created called {name}_Data which contains the class variables as it's fields and the class variable's values as its type.
+	then there is a dataclass created called {name}_Data which contains the class variable names as it's field names and the class variable's values as its type.
+	Ex: id = int would be a integer field called id. 
 
 	If you want to add extra fields to the {name}_Data instance or to make it instance another class, override Model#__data_customization__
 	"""
@@ -66,16 +67,21 @@ class Model(object):
 		db.commit()
 
 	@classmethod
-	def get_all(cls) -> list:
+	def get_all(cls, order="", reverse=False) -> list:
 		"""
 		Returns all the rows in the table in the form a {name}_Data list
 
+		Args:
+			order [str]: The field name for which you want the list ordererd by
+			reverse [bool]: Should the order be in descending 
+
 		Returns:
-		list: All the rows in the table in the form of {name}_Data instances
+			[list] : All the rows in the table in the form of {name}_Data instances
 		"""
+		order_append = " ORDER BY {}".format(order) + (" DESC" if reverse else "") if len(order) > 0 else ""  
 		db = get_db()
 		cur = db.cursor()
-		cur.execute("SELECT * FROM {}".format(cls.__table_name__))
+		cur.execute("SELECT * FROM {}".format(cls.__table_name__) + order_append)
 		data = []
 		for i in cur.fetchall():
 			data.append(cls.dataclass(*i))
@@ -83,34 +89,36 @@ class Model(object):
 
 
 	@classmethod
-	def get_filtered(cls, predicate) -> list:
+	def get_filtered(cls, predicate, order="", reverse=False) -> list:
 		"""
 		Returns the rows which holds the needed data, handled by the predicate. 
 		The predicate should be a [{name}_Data -> bool] function which handles a row in the form of a {name}_Data instance and returns whether the instance is needed or not by returning true or false. 
 		
 		Args:
-		predicate (function): A function which returns true or false based on whether the row is needed in the output or not.
+			predicate [function]: A function which returns true or false based on whether the row is needed in the output or not.
+			order [str]: The field name for which you want the list ordered by
+			reverse [bool]: Should the order be in descending 
 
 		Returns:
-		list: The filtered rows in the table in the form of {name}_Data instances.
+			[list]: The filtered rows in the table in the form of {name}_Data instances.
 		"""
-		org = cls.get_all()
+		org = cls.get_all(order, reverse)
 		filtered = list(filter(predicate, org))
 		return filtered
 	
 	@classmethod
-	def get_first(cls, predicate):
+	def get_first(cls, predicate, order="", reverse=False):
 		"""
 		Returns the first row ( when ordered chronologically by creation date ) of all the rows which return true after bring passed into the predicate. 
 		The predicate should be a [{name}_Data -> bool] function which handles a row in the form of a {name}_Data instance and returns whether the instance is needed or not by returning true or false.
 
 		Args:
-		predicate (function): A function which returns true or false based on whether the row is needed in the output or not.
+			[predicate (function)]: A function which returns true or false based on whether the row is needed in the output or not.
 
 		Returns:
-		{name}_Data: A {name}_Data instance of the first row of the table which satisfies the predicate provided. 
+			[{name}_Data]: A {name}_Data instance of the first row of the table which satisfies the predicate provided. 
 		"""
-		org = cls.get_all()
+		org = cls.get_all(order, reverse)
 		filtered = list(filter(predicate, org))
 		return filtered[0] if filtered else filtered 
 	
@@ -119,7 +127,8 @@ class Model(object):
 		"""
 		Create a {name}_Data instance of a record which is not in a table with the intent of adding it to the actual MySQL database with Model#append_record
 
-		Args
+		Returns:
+			[{name}_Data]: The record in ORM ({name}_Data) form 
 		"""
 		return cls.dataclass(*args, **kwargs)
 
@@ -199,12 +208,6 @@ class CartItem(Model):
 	item_id=int
 	qty=int
 
-class Reviews(object):
-	review_id=int
-	author_id=int
-	body=str
-	rating=int
-
 class Items(Model):
 	item_id=int
 	name=str
@@ -214,6 +217,7 @@ class Items(Model):
 
 class Bills(Model):
 	bill_id  = str
+	time_generated= int #In Unix timestamp
 	customer_id = int
 
 class BillItems(Model):

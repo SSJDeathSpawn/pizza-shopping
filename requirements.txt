@@ -1,5 +1,6 @@
-flask
-flask-login
-WTForms
-python-dotenv
-email_validator
+flask >= 2.0.0
+flask-login >= 0.5.0 
+WTForms >= 2.3.3
+MarkupSafe >= 0.23
+python-dotenv >= 0.19
+email_validator >= 1.1.3

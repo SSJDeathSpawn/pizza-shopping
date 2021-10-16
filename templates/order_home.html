@@ -65,24 +65,13 @@
 			});
 		}
 
-		function get_item_from_cart(id) {
-			return fetch(`/cart-item/?id=${id}`)
-			.then((response) => {return response.json()})
-		}
-
 		function cart_add(id) {
 			change_cart(id, true);
 		}
 
 		function cart_remove(id) {
-			console.log(id)
-			get_item_from_cart(id).then((data) =>{
-				console.log(data.qty)
-				if (data.qty > 0) {
-					change_cart(id, false);
-				}
-			});
-		}
+			change_cart(id, false);
+}
 
 		function change_cart(id, is_add) {
 			qty_change = (Number(is_add) - 0.5) * 2

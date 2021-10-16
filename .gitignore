@@ -1,4 +1,5 @@
 .vscode/
+depends/
 **/__pycache__/
 *.env
 *.db
