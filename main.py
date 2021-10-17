@@ -2,7 +2,7 @@ import dataclasses
 from flask import Flask, json, render_template, url_for, redirect, g, make_response, jsonify, request, Response
 import math
 from flask_login import LoginManager, login_user, current_user
-import os
+import os, os.path
 import string
 import random
 from urllib.parse import urlparse, urljoin
@@ -19,7 +19,8 @@ from classes import *
 
 DATABASE = 'database.db'
 
-load_dotenv()
+if os.path.isfile('./.env'):
+	load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 CSRF_KEY = os.getenv('CSRF_KEY')
 
@@ -61,12 +62,11 @@ def fill_db():
 		data = []
 		for i in f.readlines():
 			j = i[:-1].split("; ")
-			print(j)
 			data += [Items.create_record(item_id=j[0], name=j[1], description=j[2], cost=j[3], is_available=j[4])]
-		with app.app_context():
 			db = get_db()
 			for i in data:
 				Items.append_record(i)
+			print("Filled DB!")
 			db.commit()
 
 def is_safe_url(target):
@@ -144,6 +144,8 @@ def order():
 	Returns:
 		[str]: The HTML output
 	"""
+	if len(Items.get_all()) == 0:
+		fill_db()
 	form = LoginForm(request.form)
 	error = ""
 	open_modal="false"
@@ -394,11 +396,5 @@ def edit_profile():
 def orders():
 	return render_template('past_orders.html')
 
-if len(sys.argv) == 1 :
-	if __name__=="__main__":
-		app.run(host="0.0.0.0", port=8080, threaded=True,debug=True)
-else:
-	if __name__ == "__main__":
-		if sys.argv[1].lower() == "init":
-			print("hello")
-			fill_db()
+if __name__=="__main__":
+	app.run(host="0.0.0.0", port=8080, threaded=True,debug=True)

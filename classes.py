@@ -142,9 +142,9 @@ class Model(object):
 		"""
 		db = get_db()
 		cur = db.cursor()
-		print("INSERT INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");")
+		print("INSERT OR IGNORE INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");")
 		print(dataclasses.astuple(data))
-		cur.execute("INSERT INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");", dataclasses.astuple(data))
+		cur.execute("INSERT OR IGNORE INTO {} VALUES (".format(cls.__table_name__) + ", ".join("?"* len(dataclasses.fields(cls.dataclass))) + ");", dataclasses.astuple(data))
 		db.commit()
 	
 	@classmethod
